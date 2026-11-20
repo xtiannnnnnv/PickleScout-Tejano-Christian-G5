@@ -4,7 +4,7 @@ from .models import CustomUser
 
 
 class CustomUserCreationForm(UserCreationForm):
-    """Registration form for new users."""
+    """Registration form for new PickleScout users."""
 
     email = forms.EmailField(
         required=True,
@@ -14,7 +14,10 @@ class CustomUserCreationForm(UserCreationForm):
         }),
     )
     role = forms.ChoiceField(
-        choices=CustomUser.Role.choices,
+        choices=[
+            (CustomUser.Role.PLAYER, 'Player'),
+            (CustomUser.Role.COURT_ADMIN, 'Court Administrator'),
+        ],
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
 
@@ -64,14 +67,19 @@ class UserProfileForm(forms.ModelForm):
         model = CustomUser
         fields = [
             'first_name', 'last_name', 'email', 'contact_number',
-            'rank',
+            'dupr_rating', 'city', 'profile_photo',
         ]
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'contact_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'rank': forms.Select(attrs={'class': 'form-select'}),
+            'contact_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. +63 912 345 6789'}),
+            'dupr_rating': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 3.5', 'step': '0.1', 'min': '1.0', 'max': '8.0'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Makati City'}),
+            'profile_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'dupr_rating': 'DUPR Rating',
         }
 
     def clean_email(self):

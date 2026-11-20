@@ -10,19 +10,19 @@ class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = [
         'username', 'email', 'first_name', 'last_name',
-        'role', 'is_staff', 'is_active',
+        'role', 'dupr_rating', 'city', 'is_staff', 'is_active',
     ]
     list_filter = ['role', 'is_staff', 'is_active']
-    search_fields = ['username', 'email', 'first_name', 'last_name']
+    search_fields = ['username', 'email', 'first_name', 'last_name', 'city']
 
     fieldsets = UserAdmin.fieldsets + (
-        ('ValoStrat Info', {
-            'fields': ('role', 'contact_number', 'favorite_agent', 'rank', 'profile_photo'),
+        ('PickleScout Info', {
+            'fields': ('role', 'contact_number', 'dupr_rating', 'city', 'profile_photo'),
         }),
     )
 
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('ValoStrat Info', {
+        ('PickleScout Info', {
             'fields': ('role', 'email', 'first_name', 'last_name'),
         }),
     )

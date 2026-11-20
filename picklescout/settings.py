@@ -1,5 +1,5 @@
 """
-Django settings for valostrat project.
+Django settings for PickleScout project.
 """
 import os
 from pathlib import Path
@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-v4l0str4t-s3cr3t-k3y-ch4ng3-1n-pr0duct10n!'
+SECRET_KEY = 'django-insecure-p1ckl3sc0ut-s3cr3t-k3y-ch4ng3-1n-pr0duct10n!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Local apps
     'accounts',
+    'courts',
     'dashboard',
 ]
 
@@ -43,7 +44,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'valostrat.urls'
+ROOT_URLCONF = 'picklescout.urls'
 
 TEMPLATES = [
     {
@@ -61,7 +62,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'valostrat.wsgi.application'
+WSGI_APPLICATION = 'picklescout.wsgi.application'
 
 # Database — Supabase PostgreSQL
 DATABASES = {

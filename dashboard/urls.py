@@ -1,7 +1,7 @@
 from django.urls import path
-from .views import DashboardView, CoachPanelView
+from .views import DashboardView, AdminPanelView
 
 urlpatterns = [
     path('', DashboardView.as_view(), name='dashboard'),
-    path('coach-panel/', CoachPanelView.as_view(), name='coach_panel'),
+    path('admin-panel/', AdminPanelView.as_view(), name='admin_panel'),
 ]

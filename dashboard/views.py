@@ -1,44 +1,58 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import TemplateView
 from accounts.models import CustomUser
+from courts.models import Court, FavoriteCourt, CourtReport
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
     """
-    Main dashboard — visible to all authenticated users.
-    Coaches and Players see different content via the template.
+    Main dashboard — routes to role-specific templates.
+    Players see the player dashboard; Court Admins and System Admins
+    see the admin dashboard.
     """
-    template_name = 'dashboard/home.html'
 
     def get_template_names(self):
-        """Return role-specific dashboard template."""
         user = self.request.user
-        if user.role == CustomUser.Role.COACH:
+        if user.role in (CustomUser.Role.COURT_ADMIN, CustomUser.Role.SYSTEM_ADMIN):
             return ['dashboard/coach_dashboard.html']
         return ['dashboard/player_dashboard.html']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+
+        context['total_courts'] = Court.objects.filter(is_active=True).count()
         context['total_users'] = CustomUser.objects.count()
         context['total_players'] = CustomUser.objects.filter(
             role=CustomUser.Role.PLAYER
         ).count()
-        context['total_coaches'] = CustomUser.objects.filter(
-            role=CustomUser.Role.COACH
+        context['total_favorites'] = FavoriteCourt.objects.filter(
+            user=user
         ).count()
-        context['is_coach'] = user.role == CustomUser.Role.COACH
+        context['recent_courts'] = Court.objects.filter(
+            is_active=True
+        ).order_by('-created_at')[:5]
+
+        # Admin-specific context
+        if user.role in (CustomUser.Role.COURT_ADMIN, CustomUser.Role.SYSTEM_ADMIN):
+            context['my_courts'] = Court.objects.filter(
+                created_by=user, is_active=True
+            )
+            context['pending_reports'] = CourtReport.objects.filter(
+                status=CourtReport.Status.PENDING
+            ).count()
+
         return context
 
 
-class CoachPanelView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+class AdminPanelView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """
-    Coach-only panel — returns 403 if a Player tries to access it.
+    System-admin panel — returns 403 if a non-admin tries to access it.
     """
     template_name = 'dashboard/coach_panel.html'
 
     def test_func(self):
-        return self.request.user.role == CustomUser.Role.COACH
+        return self.request.user.role == CustomUser.Role.SYSTEM_ADMIN
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -47,7 +61,11 @@ class CoachPanelView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['total_players'] = CustomUser.objects.filter(
             role=CustomUser.Role.PLAYER
         ).count()
-        context['total_coaches'] = CustomUser.objects.filter(
-            role=CustomUser.Role.COACH
+        context['total_court_admins'] = CustomUser.objects.filter(
+            role=CustomUser.Role.COURT_ADMIN
         ).count()
+        context['total_courts'] = Court.objects.filter(is_active=True).count()
+        context['pending_reports_list'] = CourtReport.objects.filter(
+            status=CourtReport.Status.PENDING
+        ).select_related('court', 'reported_by')
         return context

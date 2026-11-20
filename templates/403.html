@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}403 Forbidden — ValoStrat{% endblock %}
+{% block title %}403 Forbidden — PickleScout{% endblock %}
 
 {% block content %}
 <div class="text-center py-5">
-    <h1>Access Denied</h1>
-    <p class="text-valo-teal">You don't have permission to access this page.</p>
-    <a href="{% url 'dashboard' %}" class="btn btn-valo">Back to Dashboard</a>
+    <h1 class="text-ps fw-bold display-4">403</h1>
+    <h3 class="mt-2">Access Denied</h3>
+    <p class="text-muted">You don't have permission to access this page.</p>
+    <a href="{% url 'dashboard' %}" class="btn btn-ps">Back to Dashboard</a>
 </div>
 {% endblock %}

@@ -1,8 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard — ValoStrat{% endblock %}
+{% block title %}Dashboard — PickleScout{% endblock %}
 
 {% block content %}
-<h1>Welcome, {{ user.username }}!</h1>
-<p>Role: {{ user.get_role_display }}</p>
+<div class="hero-section">
+    <h1><i class="bi bi-geo-alt-fill"></i> Welcome, {{ user.first_name|default:user.username }}!</h1>
+    <p class="lead">Discover pickleball courts near you.</p>
+    <a href="{% url 'court_list' %}" class="btn btn-light btn-lg">
+        <i class="bi bi-search"></i> Find Courts
+    </a>
+</div>
 {% endblock %}
