@@ -1,60 +1,140 @@
 {% extends "base.html" %}
 
-{% block title %}Coach Dashboard — ValoStrat{% endblock %}
+{% block title %}Admin Dashboard — PickleScout{% endblock %}
 
 {% block content %}
-<h1>Welcome, Coach {{ user.first_name|default:user.username }}!</h1>
-<p><span class="badge badge-valo">{{ user.get_role_display }}</span></p>
+<!-- Hero -->
+<div class="hero-section">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1>Admin Dashboard</h1>
+            <p class="lead mb-3">
+                {% if user.role == 'COURT_ADMIN' %}
+                    Manage your court listings and keep facility information up to date.
+                {% else %}
+                    System overview — manage users, courts, and review reports.
+                {% endif %}
+            </p>
+            {% if user.role == 'COURT_ADMIN' or user.role == 'SYSTEM_ADMIN' %}
+            <a href="{% url 'court_create' %}" class="btn btn-light btn-lg fw-semibold me-2">Add New Court</a>
+            {% endif %}
+            {% if user.role == 'SYSTEM_ADMIN' %}
+            <a href="{% url 'admin_panel' %}" class="btn btn-outline-light btn-lg fw-semibold">Admin Panel</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
+<!-- Stats -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3>{{ total_users }}</h3>
-                <p class="text-valo-teal mb-0">Total Members</p>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center py-4">
+                <div class="stat-number">{{ total_courts }}</div>
+                <div class="stat-label">Total Courts</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3>{{ total_players }}</h3>
-                <p class="text-valo-teal mb-0">Players</p>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center py-4">
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-label">Total Users</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3>{{ total_coaches }}</h3>
-                <p class="text-valo-teal mb-0">Coaches</p>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center py-4">
+                <div class="stat-number">{{ total_players }}</div>
+                <div class="stat-label">Players</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center py-4">
+                <div class="stat-number">{{ pending_reports }}</div>
+                <div class="stat-label">Pending Reports</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5>Your Profile</h5>
-                <table class="table table-sm mb-0">
-                    <tr><td class="text-valo-teal">Username</td><td>{{ user.username }}</td></tr>
-                    <tr><td class="text-valo-teal">Email</td><td>{{ user.email|default:"Not set" }}</td></tr>
-                    <tr><td class="text-valo-teal">Role</td><td>{{ user.get_role_display }}</td></tr>
+<!-- Profile + Actions -->
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header-ps px-4 py-3">
+                <h6 class="mb-0">Your Profile</h6>
+            </div>
+            <div class="card-body p-4">
+                <table class="table table-borderless table-sm mb-0">
+                    <tr><td class="text-ps fw-semibold">Username</td><td>{{ user.username }}</td></tr>
+                    <tr><td class="text-ps fw-semibold">Email</td><td>{{ user.email|default:"Not set" }}</td></tr>
                 </table>
-                <a href="{% url 'profile_edit' %}" class="btn btn-sm btn-outline-valo mt-2">Edit Profile</a>
+                <a href="{% url 'profile_edit' %}" class="btn btn-sm btn-outline-ps mt-3">Edit Profile</a>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5>Coach Actions</h5>
-                <a href="{% url 'coach_panel' %}" class="btn btn-valo w-100 mb-2">Manage Team Members</a>
-                <a href="{% url 'profile' %}" class="btn btn-outline-valo w-100">View Profile</a>
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header-ps px-4 py-3">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'court_list' %}" class="btn btn-outline-ps">Browse All Courts</a>
+                    {% if user.role == 'COURT_ADMIN' or user.role == 'SYSTEM_ADMIN' %}
+                    <a href="{% url 'court_create' %}" class="btn btn-ps">Create New Court Listing</a>
+                    {% endif %}
+                    {% if user.role == 'SYSTEM_ADMIN' %}
+                    <a href="{% url 'admin_panel' %}" class="btn btn-outline-ps">Manage Users & Reports</a>
+                    {% endif %}
+                    <a href="{% url 'profile' %}" class="btn btn-outline-ps">View Full Profile</a>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- My Courts -->
+{% if my_courts %}
+<div class="card mt-4">
+    <div class="card-header-ps px-4 py-3">
+        <h6 class="mb-0">My Court Listings</h6>
+    </div>
+    <div class="card-body p-4">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>City</th>
+                        <th>Type</th>
+                        <th>Courts</th>
+                        <th>Price/hr</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for court in my_courts %}
+                    <tr>
+                        <td><a href="{% url 'court_detail' pk=court.pk %}">{{ court.name }}</a></td>
+                        <td>{{ court.city }}</td>
+                        <td><span class="badge bg-ps">{{ court.get_facility_type_display }}</span></td>
+                        <td>{{ court.number_of_courts }}</td>
+                        <td>{% if court.rental_price %}P{{ court.rental_price }}{% else %}—{% endif %}</td>
+                        <td>
+                            <a href="{% url 'court_edit' pk=court.pk %}" class="btn btn-sm btn-outline-ps">Edit</a>
+                            <a href="{% url 'court_delete' pk=court.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

@@ -1,34 +1,42 @@
 {% extends "base.html" %}
 
-{% block title %}Register — ValoStrat{% endblock %}
+{% block title %}Register — PickleScout{% endblock %}
 
+{% load static %}
 {% block content %}
 <div class="row justify-content-center" style="min-height: 70vh; align-items: center;">
-    <div class="col-md-5">
-        <h2 class="mb-4">Create Account</h2>
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header-ps text-center py-4">
+                <img src="{% static 'img/picklescoutlogo.png' %}" alt="PickleScout" style="height: 60px;" class="mb-2">
+                <h3 class="mb-1 fw-bold">Join PickleScout</h3>
+                <small class="opacity-75">Create your account to discover courts</small>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
 
-        <form method="post">
-            {% csrf_token %}
-
-            {% for field in form %}
-                <div class="mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-                    {% if field.help_text %}
-                        <small class="form-text text-muted">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <div class="text-danger small">{{ error }}</div>
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
                     {% endfor %}
-                </div>
-            {% endfor %}
 
-            <button type="submit" class="btn btn-valo w-100">Register</button>
-        </form>
+                    <button type="submit" class="btn btn-ps w-100 py-2">Create Account</button>
+                </form>
 
-        <p class="text-center mt-3">
-            Already have an account? <a href="{% url 'login' %}" class="text-valo-red">Log In</a>
-        </p>
+                <p class="text-center mt-3 mb-0">
+                    Already have an account? <a href="{% url 'login' %}" class="fw-semibold">Log In</a>
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

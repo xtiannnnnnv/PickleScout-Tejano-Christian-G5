@@ -1,41 +1,97 @@
 {% extends "base.html" %}
 
-{% block title %}Coach Panel — ValoStrat{% endblock %}
+{% block title %}Admin Panel — PickleScout{% endblock %}
 
 {% block content %}
-<h1>Coach Panel</h1>
-<p class="text-valo-teal">Manage all ValoStrat members</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1><i class="bi bi-gear-fill text-ps"></i> Admin Panel</h1>
+        <p class="text-muted mb-0">Manage all PickleScout users and review reports</p>
+    </div>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-ps">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
 
+<!-- Stats -->
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3>{{ total_users }}</h3>
-                <p class="text-valo-teal mb-0">Total Members</p>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number">{{ total_users }}</div>
+                <div class="stat-label"><i class="bi bi-people"></i> Total Users</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3>{{ total_players }}</h3>
-                <p class="text-valo-teal mb-0">Players</p>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number">{{ total_players }}</div>
+                <div class="stat-label"><i class="bi bi-person"></i> Players</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3>{{ total_coaches }}</h3>
-                <p class="text-valo-teal mb-0">Coaches</p>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number">{{ total_court_admins }}</div>
+                <div class="stat-label"><i class="bi bi-person-badge"></i> Court Admins</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <div class="stat-number">{{ total_courts }}</div>
+                <div class="stat-label"><i class="bi bi-pin-map"></i> Courts</div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card">
+<!-- Pending Reports -->
+{% if pending_reports_list %}
+<div class="card mb-4">
+    <div class="card-header-ps px-3 py-2">
+        <h6 class="mb-0"><i class="bi bi-flag-fill"></i> Pending Reports ({{ pending_reports_list|length }})</h6>
+    </div>
     <div class="card-body">
-        <h5>All Members</h5>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Court</th>
+                        <th>Reported By</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in pending_reports_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><a href="{% url 'court_detail' pk=report.court.pk %}">{{ report.court.name }}</a></td>
+                        <td>{{ report.reported_by.username }}</td>
+                        <td>{{ report.reason|truncatewords:15 }}</td>
+                        <td>{{ report.created_at|date:"M d, Y" }}</td>
+                        <td><span class="badge bg-warning text-dark">{{ report.get_status_display }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- All Users -->
+<div class="card">
+    <div class="card-header-ps px-3 py-2">
+        <h6 class="mb-0"><i class="bi bi-people-fill"></i> All Users</h6>
+    </div>
+    <div class="card-body">
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -45,7 +101,7 @@
                         <th>Full Name</th>
                         <th>Email</th>
                         <th>Role</th>
-                        <th>Rank</th>
+                        <th>City</th>
                         <th>Joined</th>
                     </tr>
                 </thead>
@@ -56,13 +112,21 @@
                         <td>{{ member.username }}</td>
                         <td>{{ member.get_full_name|default:"—" }}</td>
                         <td>{{ member.email|default:"—" }}</td>
-                        <td><span class="badge {% if member.role == 'COACH' %}bg-warning text-dark{% else %}bg-info{% endif %}">{{ member.get_role_display }}</span></td>
-                        <td>{{ member.get_rank_display|default:"—" }}</td>
+                        <td>
+                            {% if member.role == 'SYSTEM_ADMIN' %}
+                                <span class="badge bg-danger">{{ member.get_role_display }}</span>
+                            {% elif member.role == 'COURT_ADMIN' %}
+                                <span class="badge bg-warning text-dark">{{ member.get_role_display }}</span>
+                            {% else %}
+                                <span class="badge bg-ps">{{ member.get_role_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ member.city|default:"—" }}</td>
                         <td>{{ member.date_joined|date:"M d, Y" }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center text-valo-teal">No members found.</td>
+                        <td colspan="7" class="text-center text-muted">No users found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

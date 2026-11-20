@@ -1,37 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Login — ValoStrat{% endblock %}
+{% block title %}Login — PickleScout{% endblock %}
 
+{% load static %}
 {% block content %}
 <div class="row justify-content-center" style="min-height: 70vh; align-items: center;">
-    <div class="col-md-4">
-        <h2 class="mb-4">Login</h2>
-
-        <form method="post">
-            {% csrf_token %}
-
-            <div class="mb-3">
-                <label for="id_username" class="form-label">Username</label>
-                <input type="text" name="username" id="id_username" class="form-control" required>
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header-ps text-center py-4">
+                <img src="{% static 'img/picklescoutlogo.png' %}" alt="PickleScout" style="height: 60px;" class="mb-2">
+                <h3 class="mb-1 fw-bold">PickleScout</h3>
+                <small class="opacity-75">Find your perfect court</small>
             </div>
+            <div class="card-body p-4">
+                <h5 class="mb-3 fw-bold">Welcome Back</h5>
 
-            <div class="mb-3">
-                <label for="id_password" class="form-label">Password</label>
-                <input type="password" name="password" id="id_password" class="form-control" required>
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Username</label>
+                        <input type="text" name="username" id="id_username" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Password</label>
+                        <input type="password" name="password" id="id_password" class="form-control" required>
+                    </div>
+
+                    {% if form.non_field_errors %}
+                        {% for error in form.non_field_errors %}
+                            <div class="alert alert-danger py-2">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-ps w-100 py-2">Log In</button>
+                </form>
+
+                <p class="text-center mt-3 mb-0">
+                    Don't have an account? <a href="{% url 'register' %}" class="fw-semibold">Register here</a>
+                </p>
             </div>
-
-            {% if form.non_field_errors %}
-                {% for error in form.non_field_errors %}
-                    <div class="alert alert-danger py-2">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-
-            <button type="submit" class="btn btn-valo w-100">Log In</button>
-        </form>
-
-        <p class="text-center mt-3">
-            Don't have an account? <a href="{% url 'register' %}" class="text-valo-red">Register</a>
-        </p>
+        </div>
     </div>
 </div>
 {% endblock %}
