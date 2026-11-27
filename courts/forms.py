@@ -5,36 +5,59 @@ from .models import Court, CourtReport, CourtReview
 class CourtForm(forms.ModelForm):
     """Form for creating and editing court listings."""
 
+    review_topics = forms.MultipleChoiceField(
+        choices=Court.ReviewTopic.choices,
+        required=False,
+        label='Review topics',
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+    )
+
     class Meta:
         model = Court
         fields = [
-            'name', 'description', 'facility_type', 'surface_type',
-            'number_of_courts', 'address', 'city', 'province_state',
-            'zip_code', 'latitude', 'longitude', 'contact_number',
-            'email', 'website', 'operating_hours', 'rental_price',
-            'has_lighting', 'has_parking', 'has_restrooms',
-            'has_equipment_rental', 'has_water_fountain', 'has_seating',
-            'is_wheelchair_accessible', 'photo',
+            'name', 'description', 'review_topics', 'overall_rating',
+            'facility_type', 'surface_type', 'number_of_courts', 'address',
+            'website', 'rental_price',
+            'photo',
         ]
+        labels = {
+            'name': 'Court Name',
+            'description': 'Additional Review (optional)',
+            'overall_rating': 'Overall Experience',
+            'facility_type': 'Court Type',
+            'website': 'Website / Social Media Link',
+        }
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Facility name'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describe the facility...'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Court name'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Add details not covered by the topics above...'}),
             'facility_type': forms.Select(attrs={'class': 'form-select'}),
             'surface_type': forms.Select(attrs={'class': 'form-select'}),
             'number_of_courts': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Street address'}),
-            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
-            'province_state': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Province / State'}),
-            'zip_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ZIP code'}),
-            'latitude': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Latitude', 'step': '0.000001'}),
-            'longitude': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Longitude', 'step': '0.000001'}),
-            'contact_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Contact number'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Contact email'}),
-            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://...'}),
-            'operating_hours': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Mon–Fri 6 AM – 10 PM'}),
-            'rental_price': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Price per hour', 'step': '0.01'}),
+            'address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Street address in Cebu'}),
+            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://website-or-social-page...'}),
+            'overall_rating': forms.Select(attrs={'class': 'form-select'}),
+            'rental_price': forms.TextInput(attrs={
+                'class': 'form-control',
+                'inputmode': 'decimal',
+                'placeholder': 'e.g. 150',
+            }),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name = cleaned_data.get('name')
+        address = cleaned_data.get('address')
+        if name and address:
+            duplicates = Court.objects.filter(
+                name__iexact=name,
+                address__iexact=address,
+            )
+            if self.instance.pk:
+                duplicates = duplicates.exclude(pk=self.instance.pk)
+            if duplicates.exists():
+                self.add_error('name', 'A court with this name and address already exists.')
+        return cleaned_data
 
 
 class CourtSearchForm(forms.Form):
@@ -43,7 +66,7 @@ class CourtSearchForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Search by name or location...',
+            'placeholder': 'Search by court name or address in Cebu...',
         }),
     )
     facility_type = forms.ChoiceField(

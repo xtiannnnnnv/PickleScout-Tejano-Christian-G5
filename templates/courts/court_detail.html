@@ -22,8 +22,7 @@
             <div>
                 <h1 class="fw-bold mb-1">{{ court.name }}</h1>
                 <p class="text-muted mb-2">
-                    {{ court.address }}, {{ court.city }}{% if court.province_state %}, {{ court.province_state }}{% endif %}
-                    {% if court.zip_code %} {{ court.zip_code }}{% endif %}
+                    {{ court.address }}, {{ court.city }}
                 </p>
             </div>
             {% if user.is_authenticated %}
@@ -45,11 +44,23 @@
             <span class="badge fs-6" style="background-color: var(--ps-accent);">{{ court.number_of_courts }} court{{ court.number_of_courts|pluralize }}</span>
         </div>
 
-        {% if court.description %}
+        {% if court.description or court.get_review_topic_labels or court.overall_rating %}
         <div class="card mb-3">
             <div class="card-body p-4">
-                <h5 class="text-ps fw-bold">About</h5>
+                <h5 class="text-ps fw-bold">Review</h5>
+                {% if court.overall_rating %}
+                <p class="mb-3"><strong>Overall Experience:</strong> {{ court.overall_rating }} / 10</p>
+                {% endif %}
+                {% if court.get_review_topic_labels %}
+                <div class="d-flex flex-wrap gap-2 {% if court.description %}mb-3{% endif %}">
+                    {% for topic in court.get_review_topic_labels %}
+                    <span class="badge rounded-pill bg-ps-pale text-ps px-3 py-2">{{ topic }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if court.description %}
                 <p class="mb-0">{{ court.description|linebreaksbr }}</p>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -89,21 +100,9 @@
                         <td>{{ court.operating_hours }}</td>
                     </tr>
                     {% endif %}
-                    {% if court.contact_number %}
-                    <tr>
-                        <td class="text-ps fw-semibold">Phone</td>
-                        <td>{{ court.contact_number }}</td>
-                    </tr>
-                    {% endif %}
-                    {% if court.email %}
-                    <tr>
-                        <td class="text-ps fw-semibold">Email</td>
-                        <td><a href="mailto:{{ court.email }}">{{ court.email }}</a></td>
-                    </tr>
-                    {% endif %}
                     {% if court.website %}
                     <tr>
-                        <td class="text-ps fw-semibold">Website</td>
+                        <td class="text-ps fw-semibold">Website / Social</td>
                         <td><a href="{{ court.website }}" target="_blank" rel="noopener">Visit site</a></td>
                     </tr>
                     {% endif %}

@@ -257,11 +257,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'court_list' %}">Find Courts</a>
                     </li>
-                    {% if user.role == 'COURT_ADMIN' or user.role == 'SYSTEM_ADMIN' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'court_create' %}">Add Court</a>
                     </li>
-                    {% endif %}
                     {% if user.role == 'SYSTEM_ADMIN' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'admin_panel' %}">Admin Panel</a>
@@ -291,6 +289,9 @@
                 </ul>
                 {% else %}
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'court_list' %}">Find Courts</a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'login' %}">Login</a>
                     </li>
