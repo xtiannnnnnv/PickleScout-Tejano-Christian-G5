@@ -172,8 +172,8 @@ class CourtReview(models.Model):
         related_name='court_reviews',
     )
     rating = models.PositiveIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text='Rate from 1 (poor) to 5 (excellent)',
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        help_text='Rate from 1 (poor) to 10 (excellent)',
     )
     comment = models.TextField(
         blank=True,
@@ -185,6 +185,12 @@ class CourtReview(models.Model):
     class Meta:
         ordering = ['-created_at']
         unique_together = ('court', 'user')  # one review per user per court
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(rating__gte=1, rating__lte=10),
+                name='court_review_rating_1_to_10',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.user.username} — {self.rating}/5 — {self.court.name}'

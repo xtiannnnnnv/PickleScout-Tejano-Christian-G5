@@ -30,11 +30,10 @@ def court_list(request):
     if form.is_valid():
         q = form.cleaned_data.get('q')
         facility_type = form.cleaned_data.get('facility_type')
+        surface_type = form.cleaned_data.get('surface_type')
         max_price = form.cleaned_data.get('max_price')
-        has_lighting = form.cleaned_data.get('has_lighting')
-        has_parking = form.cleaned_data.get('has_parking')
-        has_restrooms = form.cleaned_data.get('has_restrooms')
-        has_equipment_rental = form.cleaned_data.get('has_equipment_rental')
+        min_rating = form.cleaned_data.get('min_rating')
+        review_topics = form.cleaned_data.get('review_topics')
 
         if q:
             courts = courts.filter(
@@ -43,16 +42,18 @@ def court_list(request):
             )
         if facility_type:
             courts = courts.filter(facility_type=facility_type)
+        if surface_type:
+            courts = courts.filter(surface_type=surface_type)
         if max_price is not None:
             courts = courts.filter(rental_price__lte=max_price)
-        if has_lighting:
-            courts = courts.filter(has_lighting=True)
-        if has_parking:
-            courts = courts.filter(has_parking=True)
-        if has_restrooms:
-            courts = courts.filter(has_restrooms=True)
-        if has_equipment_rental:
-            courts = courts.filter(has_equipment_rental=True)
+        if min_rating:
+            courts = courts.filter(overall_rating__gte=min_rating)
+        if review_topics:
+            selected_topics = set(review_topics)
+            courts = [
+                court for court in courts
+                if selected_topics.intersection(court.review_topics or [])
+            ]
 
     # Mark favorites for authenticated users
     favorite_ids = set()
@@ -66,7 +67,7 @@ def court_list(request):
         'form': form,
         'courts': courts,
         'favorite_ids': favorite_ids,
-        'result_count': courts.count(),
+        'result_count': len(courts) if isinstance(courts, list) else courts.count(),
     }
     return render(request, 'courts/court_list.html', context)
 
@@ -202,7 +203,7 @@ def report_court(request, pk):
 
 @login_required
 def submit_review(request, pk):
-    """Submit or update a review for a court."""
+    """Submit or update a rating for a court."""
     court = get_object_or_404(Court, pk=pk, is_active=True)
 
     # Check if user already has a review
@@ -216,9 +217,9 @@ def submit_review(request, pk):
             review.user = request.user
             review.save()
             if existing_review:
-                messages.success(request, 'Your review has been updated!')
+                messages.success(request, 'Your rating has been updated!')
             else:
-                messages.success(request, 'Thank you for your review!')
+                messages.success(request, 'Thank you for rating this court!')
             return redirect('court_detail', pk=pk)
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -240,6 +241,6 @@ def delete_review(request, pk):
 
     if request.method == 'POST':
         review.delete()
-        messages.success(request, 'Your review has been deleted.')
+        messages.success(request, 'Your rating has been deleted.')
 
     return redirect('court_detail', pk=pk)

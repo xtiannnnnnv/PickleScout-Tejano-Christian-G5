@@ -71,7 +71,15 @@ class CourtSearchForm(forms.Form):
     )
     facility_type = forms.ChoiceField(
         required=False,
-        choices=[('', 'All Types')] + list(Court.FacilityType.choices),
+        choices=[('', 'All Court Types')] + [
+            choice for choice in Court.FacilityType.choices
+            if choice[0] != Court.FacilityType.BOTH
+        ],
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    surface_type = forms.ChoiceField(
+        required=False,
+        choices=[('', 'Any Surface')] + list(Court.SurfaceType.choices),
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
     max_price = forms.DecimalField(
@@ -83,10 +91,19 @@ class CourtSearchForm(forms.Form):
             'step': '50',
         }),
     )
-    has_lighting = forms.BooleanField(required=False, label='Lighting')
-    has_parking = forms.BooleanField(required=False, label='Parking')
-    has_restrooms = forms.BooleanField(required=False, label='Restrooms')
-    has_equipment_rental = forms.BooleanField(required=False, label='Equipment Rental')
+    min_rating = forms.ChoiceField(
+        required=False,
+        choices=[('', 'Any Rating')] + [
+            (str(rating), f'{rating}+ / 10')
+            for rating in range(1, 11)
+        ],
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+    review_topics = forms.MultipleChoiceField(
+        required=False,
+        choices=Court.ReviewTopic.choices,
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+    )
 
 
 class CourtReportForm(forms.ModelForm):
@@ -105,19 +122,26 @@ class CourtReportForm(forms.ModelForm):
 
 
 class CourtReviewForm(forms.ModelForm):
-    """Form for submitting a court review."""
+    """Form for submitting a rating for a court."""
 
     class Meta:
         model = CourtReview
         fields = ['rating', 'comment']
+        labels = {
+            'rating': 'Your Rating',
+            'comment': 'Optional Comment',
+        }
         widgets = {
             'rating': forms.Select(
-                choices=[(i, f'{i} Star{"s" if i > 1 else ""}') for i in range(1, 6)],
+                choices=[('', 'Choose a rating')] + [
+                    (i, str(i))
+                    for i in range(1, 11)
+                ],
                 attrs={'class': 'form-select'},
             ),
             'comment': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Share your experience at this court...',
+                'placeholder': 'Share an optional comment about your experience...',
             }),
         }
