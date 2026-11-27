@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found | PickleScout{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 55vh;">
+    <div class="col-lg-8 text-center">
+        <p class="display-1 fw-bold text-ps mb-0">404</p>
+        <p class="text-uppercase fw-bold text-secondary mb-2">Court not found</p>
+        <h1 class="fw-bold mb-3">This page is out of bounds.</h1>
+        <p class="text-secondary mb-4">
+            We couldn't find the page you're looking for. It may have moved or the link may be incorrect.
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{% url 'court_list' %}" class="btn btn-ps">Explore courts</a>
+            <a href="{% url 'landing' %}" class="btn btn-outline-ps">Back to home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
