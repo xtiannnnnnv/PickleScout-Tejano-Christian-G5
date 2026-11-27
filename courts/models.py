@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models.functions import Lower
 
 
 class Court(models.Model):
@@ -12,16 +13,32 @@ class Court(models.Model):
         BOTH = 'BOTH', 'Indoor & Outdoor'
 
     class SurfaceType(models.TextChoices):
-        CONCRETE = 'CONCRETE', 'Concrete'
-        ASPHALT = 'ASPHALT', 'Asphalt'
-        WOOD = 'WOOD', 'Wood / Hardwood'
-        SYNTHETIC = 'SYNTHETIC', 'Synthetic / Sport Court'
-        ACRYLIC = 'ACRYLIC', 'Acrylic'
-        OTHER = 'OTHER', 'Other'
+        SILICA_SAND = 'SILICA_SAND', 'Silica Sand'
+        NOT_SILICA_SAND = 'NOT_SILICA_SAND', 'Not Silica Sand'
+
+    class ReviewTopic(models.TextChoices):
+        COURT_QUALITY = 'court_condition', 'Court Quality'
+        FACILITIES = 'facilities', 'Facilities'
+        AFFORDABILITY = 'value_for_money', 'Affordability'
+        ACCESSIBILITY = 'location_access', 'Accessibility'
+        EQUIPMENT = 'equipment', 'Equipment'
+        STAFF_SERVICE = 'staff_service', 'Staff & Service'
+
+    OVERALL_RATING_CHOICES = [
+        (rating, str(rating))
+        for rating in range(1, 11)
+    ]
 
     # Basic info
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    review_topics = models.JSONField(default=list, blank=True)
+    overall_rating = models.PositiveSmallIntegerField(
+        choices=OVERALL_RATING_CHOICES,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        blank=True,
+        null=True,
+    )
     facility_type = models.CharField(
         max_length=10,
         choices=FacilityType.choices,
@@ -30,13 +47,13 @@ class Court(models.Model):
     surface_type = models.CharField(
         max_length=15,
         choices=SurfaceType.choices,
-        blank=True,
+        default=SurfaceType.NOT_SILICA_SAND,
     )
     number_of_courts = models.PositiveIntegerField(default=1)
 
     # Location
     address = models.CharField(max_length=300)
-    city = models.CharField(max_length=100)
+    city = models.CharField(max_length=100, default='Cebu')
     province_state = models.CharField(max_length=100, blank=True, verbose_name='Province / State')
     zip_code = models.CharField(max_length=20, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
@@ -81,6 +98,20 @@ class Court(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                Lower('name'),
+                Lower('address'),
+                name='unique_court_name_address_ci',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(overall_rating__isnull=True)
+                    | models.Q(overall_rating__gte=1, overall_rating__lte=10)
+                ),
+                name='court_overall_rating_1_to_10',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.name} — {self.city}'
@@ -103,6 +134,18 @@ class Court(models.Model):
         if self.is_wheelchair_accessible:
             amenities.append('Wheelchair Accessible')
         return amenities
+
+    def get_review_topic_labels(self):
+        topic_labels = dict(self.ReviewTopic.choices)
+        topic_labels.update({
+            'booking_availability': 'Booking and availability',
+            'overall_experience': 'Overall experience',
+        })
+        return [
+            topic_labels[topic]
+            for topic in (self.review_topics or [])
+            if topic in topic_labels
+        ]
 
     def average_rating(self):
         """Return the average review rating or None."""

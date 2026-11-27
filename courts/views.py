@@ -8,7 +8,7 @@ from accounts.models import CustomUser
 
 
 def landing_page(request):
-    """Public landing page — the first thing visitors see."""
+    """Show the public landing page."""
     if request.user.is_authenticated:
         return redirect('dashboard')
     featured_courts = Court.objects.filter(is_active=True).order_by('-created_at')[:6]
@@ -39,9 +39,7 @@ def court_list(request):
         if q:
             courts = courts.filter(
                 Q(name__icontains=q) |
-                Q(city__icontains=q) |
-                Q(address__icontains=q) |
-                Q(province_state__icontains=q)
+                Q(address__icontains=q)
             )
         if facility_type:
             courts = courts.filter(facility_type=facility_type)
@@ -104,11 +102,7 @@ def court_detail(request, pk):
 
 @login_required
 def court_create(request):
-    """Allow court admins to create a new court listing."""
-    if request.user.role not in (CustomUser.Role.COURT_ADMIN, CustomUser.Role.SYSTEM_ADMIN):
-        messages.error(request, 'Only court administrators can create listings.')
-        return redirect('court_list')
-
+    """Allow any logged-in user to create a court listing."""
     if request.method == 'POST':
         form = CourtForm(request.POST, request.FILES)
         if form.is_valid():
