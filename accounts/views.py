@@ -31,6 +31,7 @@ def register(request):
 class CustomLoginView(LoginView):
     """Custom login view with styled template."""
     template_name = 'registration/login.html'
+    redirect_authenticated_user = True
 
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid username or password.')

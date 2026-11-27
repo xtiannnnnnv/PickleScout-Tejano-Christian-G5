@@ -46,8 +46,18 @@
                         <td>{% if user.dupr_rating %}{{ user.dupr_rating }}{% else %}Not set{% endif %}</td>
                     </tr>
                     <tr>
-                        <td class="text-ps fw-semibold">City</td>
-                        <td>{{ user.city|default:"Not set" }}</td>
+                        <td class="text-ps fw-semibold">Social Links</td>
+                        <td>
+                            {% if user.social_links %}
+                            <ul class="list-unstyled mb-0">
+                                {% for social_link in user.social_links %}
+                                <li><a href="{{ social_link }}" target="_blank" rel="noopener noreferrer">{{ social_link|truncatechars:50 }}</a></li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            Not set
+                            {% endif %}
+                        </td>
                     </tr>
                     <tr>
                         <td class="text-ps fw-semibold">Member Since</td>

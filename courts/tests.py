@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import CustomUser
-from .forms import CourtForm
-from .models import Court
+from .forms import CourtForm, CourtReviewForm, CourtSearchForm
+from .models import Court, CourtReview
 
 
 class CourtAccessAndCreationTests(TestCase):
@@ -163,6 +163,51 @@ class CourtAccessAndCreationTests(TestCase):
                 form = CourtForm(data=self.court_data(overall_rating=rating))
                 self.assertEqual(form.is_valid(), valid)
 
+    def test_find_courts_filters_match_court_review_information(self):
+        indoor_court = Court.objects.create(
+            name='Indoor Cebu Court',
+            address='1 Cebu Road',
+            created_by=self.player,
+            facility_type=Court.FacilityType.INDOOR,
+            surface_type=Court.SurfaceType.SILICA_SAND,
+            review_topics=[
+                Court.ReviewTopic.FACILITIES,
+                Court.ReviewTopic.ACCESSIBILITY,
+            ],
+            overall_rating=9,
+            description='Bright courts with good seating.',
+        )
+        Court.objects.create(
+            name='Outdoor Cebu Court',
+            address='2 Cebu Road',
+            created_by=self.player,
+            facility_type=Court.FacilityType.OUTDOOR,
+            overall_rating=6,
+        )
+
+        type_choices = list(CourtSearchForm.base_fields['facility_type'].choices)
+        self.assertIn(('', 'All Court Types'), type_choices)
+        self.assertNotIn(
+            (Court.FacilityType.BOTH, 'Indoor & Outdoor'),
+            type_choices,
+        )
+
+        response = self.client.get(
+            reverse('court_list'),
+            {
+                'facility_type': Court.FacilityType.INDOOR,
+                'surface_type': Court.SurfaceType.SILICA_SAND,
+                'min_rating': '8',
+                'review_topics': [Court.ReviewTopic.FACILITIES],
+            },
+        )
+
+        self.assertContains(response, indoor_court.name)
+        self.assertContains(response, 'Overall Experience: 9 / 10')
+        self.assertContains(response, 'Facilities')
+        self.assertContains(response, 'Bright courts with good seating.')
+        self.assertNotContains(response, 'Outdoor Cebu Court')
+
     def test_duplicate_court_name_and_address_is_rejected_case_insensitively(self):
         self.client.force_login(self.player)
         Court.objects.create(
@@ -190,6 +235,38 @@ class CourtAccessAndCreationTests(TestCase):
                     address='123 cebu road',
                     created_by=self.player,
                 )
+
+    def test_non_owner_cannot_edit_or_delete_court_by_direct_url(self):
+        court = Court.objects.create(
+            name='Owner Court',
+            address='123 Cebu Road',
+            created_by=self.player,
+        )
+        other_user = CustomUser.objects.create_user(
+            username='other-court-player',
+            password='test-password',
+        )
+        self.client.force_login(other_user)
+
+        edit_response = self.client.post(
+            reverse('court_edit', kwargs={'pk': court.pk}),
+            self.court_data(name='Unauthorized Name Change'),
+        )
+        delete_response = self.client.post(
+            reverse('court_delete', kwargs={'pk': court.pk}),
+        )
+
+        self.assertRedirects(
+            edit_response,
+            reverse('court_detail', kwargs={'pk': court.pk}),
+        )
+        self.assertRedirects(
+            delete_response,
+            reverse('court_detail', kwargs={'pk': court.pk}),
+        )
+        court.refresh_from_db()
+        self.assertEqual(court.name, 'Owner Court')
+        self.assertTrue(court.is_active)
 
     def test_surface_choices_are_limited_to_silica_sand_or_not(self):
         choices = set(CourtForm.base_fields['surface_type'].choices)
@@ -247,3 +324,109 @@ class CourtAccessAndCreationTests(TestCase):
         court.refresh_from_db()
         self.assertTrue(court.has_lighting)
         self.assertEqual(court.operating_hours, 'Daily, 7 AM–9 PM')
+
+
+class CourtRatingTests(TestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            username='court-rater',
+            password='test-password',
+        )
+        self.court = Court.objects.create(
+            name='Listed Pickleball Court',
+            address='123 Cebu Road',
+            created_by=self.user,
+        )
+
+    def test_anonymous_users_are_prompted_to_log_in_to_rate(self):
+        response = self.client.get(
+            reverse('court_detail', kwargs={'pk': self.court.pk})
+        )
+        self.assertContains(response, 'Player Ratings')
+        self.assertContains(response, 'Log in to rate this court')
+
+        rating_response = self.client.get(
+            reverse('submit_review', kwargs={'pk': self.court.pk})
+        )
+        self.assertEqual(rating_response.status_code, 302)
+        self.assertIn('/accounts/login/', rating_response.url)
+
+    def test_logged_in_user_can_submit_rating_without_a_comment(self):
+        self.client.force_login(self.user)
+        form_response = self.client.get(
+            reverse('submit_review', kwargs={'pk': self.court.pk})
+        )
+        self.assertContains(form_response, 'Choose a rating')
+        self.assertContains(form_response, '<span class="input-group-text">/ 10</span>')
+        self.assertContains(form_response, 'Optional Comment')
+
+        response = self.client.post(
+            reverse('submit_review', kwargs={'pk': self.court.pk}),
+            {'rating': '9'},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('court_detail', kwargs={'pk': self.court.pk}),
+        )
+        rating = CourtReview.objects.get(court=self.court, user=self.user)
+        self.assertEqual(rating.rating, 9)
+        self.assertEqual(rating.comment, '')
+
+        detail_response = self.client.get(
+            reverse('court_detail', kwargs={'pk': self.court.pk})
+        )
+        self.assertContains(detail_response, '9 / 10')
+        self.assertContains(detail_response, 'Player Ratings')
+        self.assertNotContains(detail_response, 'Optional Comment')
+
+    def test_user_can_add_an_optional_comment_with_a_rating(self):
+        self.client.force_login(self.user)
+        comment = 'Friendly players and a well-kept court.'
+
+        response = self.client.post(
+            reverse('submit_review', kwargs={'pk': self.court.pk}),
+            {'rating': '8', 'comment': comment},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('court_detail', kwargs={'pk': self.court.pk}),
+        )
+        rating = CourtReview.objects.get(court=self.court, user=self.user)
+        self.assertEqual(rating.rating, 8)
+        self.assertEqual(rating.comment, comment)
+
+        detail_response = self.client.get(
+            reverse('court_detail', kwargs={'pk': self.court.pk})
+        )
+        self.assertContains(detail_response, comment)
+
+    def test_user_can_update_existing_rating_without_creating_another(self):
+        self.client.force_login(self.user)
+        self.client.post(
+            reverse('submit_review', kwargs={'pk': self.court.pk}),
+            {'rating': '6'},
+        )
+
+        response = self.client.post(
+            reverse('submit_review', kwargs={'pk': self.court.pk}),
+            {'rating': '8'},
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('court_detail', kwargs={'pk': self.court.pk}),
+        )
+        self.assertEqual(CourtReview.objects.filter(court=self.court).count(), 1)
+        self.assertEqual(
+            CourtReview.objects.get(court=self.court, user=self.user).rating,
+            8,
+        )
+
+    def test_rating_form_accepts_only_values_from_one_to_ten(self):
+        self.assertFalse(CourtReviewForm.base_fields['comment'].required)
+        for rating, valid in (('1', True), ('10', True), ('0', False), ('11', False)):
+            with self.subTest(rating=rating):
+                form = CourtReviewForm(data={'rating': rating})
+                self.assertEqual(form.is_valid(), valid)

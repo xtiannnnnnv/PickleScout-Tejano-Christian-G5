@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}{% if editing %}Update Rating{% else %}Rate Court{% endif %} — PickleScout{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <h2 class="text-ps fw-bold mb-4">{% if editing %}Update Your Rating{% else %}Rate {{ court.name }}{% endif %}</h2>
+        <div class="card">
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="{{ form.rating.id_for_label }}" class="form-label">{{ form.rating.label }}</label>
+                        <div class="input-group">
+                            {{ form.rating }}
+                            <span class="input-group-text">/ 10</span>
+                        </div>
+                        <div class="form-text">Choose a rating from 1 (lowest) to 10 (highest).</div>
+                        {% for error in form.rating.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-4">
+                        <label for="{{ form.comment.id_for_label }}" class="form-label">{{ form.comment.label }}</label>
+                        {{ form.comment }}
+                        {% if form.comment.help_text %}
+                        <div class="form-text">{{ form.comment.help_text }}</div>
+                        {% endif %}
+                        {% for error in form.comment.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-ps">{% if editing %}Save Rating{% else %}Submit Rating{% endif %}</button>
+                        <a href="{% url 'court_detail' pk=court.pk %}" class="btn btn-outline-ps">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

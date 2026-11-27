@@ -27,6 +27,7 @@ class CustomUser(AbstractUser):
         help_text='Your DUPR rating (e.g. 3.5)',
     )
     city = models.CharField(max_length=100, blank=True, help_text='Your city or area')
+    social_links = models.JSONField(default=list, blank=True)
     profile_photo = models.ImageField(
         upload_to='profile_photos/',
         blank=True,
