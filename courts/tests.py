@@ -56,7 +56,8 @@ class CourtAccessAndCreationTests(TestCase):
 
         create_response = self.client.get(reverse('court_create'))
         self.assertEqual(create_response.status_code, 302)
-        self.assertIn('/accounts/login/', create_response.url)
+        self.assertEqual(create_response.url.split('?')[0], reverse('landing'))
+        self.assertEqual(self.client.get(create_response.url).status_code, 200)
         self.assertEqual(self.client.get(reverse('login')).status_code, 200)
         self.assertEqual(self.client.get(reverse('register')).status_code, 200)
 
@@ -349,7 +350,8 @@ class CourtRatingTests(TestCase):
             reverse('submit_review', kwargs={'pk': self.court.pk})
         )
         self.assertEqual(rating_response.status_code, 302)
-        self.assertIn('/accounts/login/', rating_response.url)
+        self.assertEqual(rating_response.url.split('?')[0], reverse('landing'))
+        self.assertEqual(self.client.get(rating_response.url).status_code, 200)
 
     def test_logged_in_user_can_submit_rating_without_a_comment(self):
         self.client.force_login(self.user)

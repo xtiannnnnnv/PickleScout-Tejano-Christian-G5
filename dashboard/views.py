@@ -1,4 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import redirect
 from django.views.generic import TemplateView
 from accounts.models import CustomUser
 from courts.models import Court, FavoriteCourt, CourtReport
@@ -53,6 +55,15 @@ class AdminPanelView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
     def test_func(self):
         return self.request.user.role == CustomUser.Role.SYSTEM_ADMIN
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            messages.error(
+                self.request,
+                'You do not have permission to access that page.',
+            )
+            return redirect('dashboard')
+        return super().handle_no_permission()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -112,14 +112,22 @@ class AuthenticationRouteAccessTests(TestCase):
             with self.subTest(route_name=route_name):
                 response = self.client.get(reverse(route_name))
                 self.assertEqual(response.status_code, 302)
-                self.assertIn('/accounts/login/', response.url)
+                self.assertEqual(response.url.split('?')[0], reverse('landing'))
+                self.assertEqual(self.client.get(response.url).status_code, 200)
 
-    def test_regular_user_cannot_open_system_admin_panel(self):
+    def test_regular_user_is_redirected_from_system_admin_panel(self):
         self.client.force_login(self.user)
 
         response = self.client.get(reverse('admin_panel'))
 
-        self.assertEqual(response.status_code, 403)
+        self.assertRedirects(response, reverse('dashboard'))
+
+    def test_logout_returns_user_to_landing_page(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('logout'))
+
+        self.assertRedirects(response, reverse('landing'))
 
 
 class ProfilePhotoUploadTests(TestCase):
