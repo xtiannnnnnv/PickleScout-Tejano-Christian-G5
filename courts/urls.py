@@ -9,5 +9,7 @@ urlpatterns = [
     path('<int:pk>/delete/', views.court_delete, name='court_delete'),
     path('<int:pk>/favorite/', views.toggle_favorite, name='toggle_favorite'),
     path('<int:pk>/report/', views.report_court, name='report_court'),
+    path('<int:pk>/review/', views.submit_review, name='submit_review'),
+    path('<int:pk>/review/delete/', views.delete_review, name='delete_review'),
     path('favorites/', views.favorite_list, name='favorite_list'),
 ]

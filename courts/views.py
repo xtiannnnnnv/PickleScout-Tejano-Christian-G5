@@ -1,10 +1,25 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from .models import Court, FavoriteCourt, CourtReport
-from .forms import CourtForm, CourtSearchForm, CourtReportForm
+from django.db.models import Q, Avg
+from .models import Court, FavoriteCourt, CourtReport, CourtReview
+from .forms import CourtForm, CourtSearchForm, CourtReportForm, CourtReviewForm
 from accounts.models import CustomUser
+
+
+def landing_page(request):
+    """Public landing page — the first thing visitors see."""
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    featured_courts = Court.objects.filter(is_active=True).order_by('-created_at')[:6]
+    total_courts = Court.objects.filter(is_active=True).count()
+    total_users = CustomUser.objects.count()
+    context = {
+        'featured_courts': featured_courts,
+        'total_courts': total_courts,
+        'total_users': total_users,
+    }
+    return render(request, 'landing.html', context)
 
 
 def court_list(request):
@@ -62,15 +77,27 @@ def court_detail(request, pk):
     """Display detailed information about a single court."""
     court = get_object_or_404(Court, pk=pk, is_active=True)
     is_favorite = False
+    user_review = None
     if request.user.is_authenticated:
         is_favorite = FavoriteCourt.objects.filter(
             user=request.user, court=court
         ).exists()
+        user_review = CourtReview.objects.filter(
+            user=request.user, court=court
+        ).first()
+
+    reviews = court.reviews.select_related('user').all()
+    avg_rating = court.average_rating()
+    review_count = court.review_count()
 
     context = {
         'court': court,
         'is_favorite': is_favorite,
         'amenities': court.amenities_list(),
+        'reviews': reviews,
+        'avg_rating': avg_rating,
+        'review_count': review_count,
+        'user_review': user_review,
     }
     return render(request, 'courts/court_detail.html', context)
 
@@ -177,3 +204,48 @@ def report_court(request, pk):
         form = CourtReportForm()
 
     return render(request, 'courts/report_court.html', {'form': form, 'court': court})
+
+
+@login_required
+def submit_review(request, pk):
+    """Submit or update a review for a court."""
+    court = get_object_or_404(Court, pk=pk, is_active=True)
+
+    # Check if user already has a review
+    existing_review = CourtReview.objects.filter(user=request.user, court=court).first()
+
+    if request.method == 'POST':
+        form = CourtReviewForm(request.POST, instance=existing_review)
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.court = court
+            review.user = request.user
+            review.save()
+            if existing_review:
+                messages.success(request, 'Your review has been updated!')
+            else:
+                messages.success(request, 'Thank you for your review!')
+            return redirect('court_detail', pk=pk)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = CourtReviewForm(instance=existing_review)
+
+    return render(request, 'courts/submit_review.html', {
+        'form': form,
+        'court': court,
+        'editing': existing_review is not None,
+    })
+
+
+@login_required
+def delete_review(request, pk):
+    """Delete the user's review for a court."""
+    court = get_object_or_404(Court, pk=pk, is_active=True)
+    review = get_object_or_404(CourtReview, court=court, user=request.user)
+
+    if request.method == 'POST':
+        review.delete()
+        messages.success(request, 'Your review has been deleted.')
+
+    return redirect('court_detail', pk=pk)

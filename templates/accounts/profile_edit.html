@@ -12,6 +12,21 @@
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 
+                    <div class="text-center mb-4">
+                        {% if user.profile_photo %}
+                        <img id="profilePhotoPreview" src="{{ user.profile_photo.url }}" alt="Current profile photo" class="profile-avatar-large">
+                        <div id="profilePhotoPlaceholder" class="profile-avatar-placeholder mx-auto" hidden>
+                            {{ user.first_name|default:user.username|slice:":1"|upper }}
+                        </div>
+                        {% else %}
+                        <img id="profilePhotoPreview" alt="Profile photo preview" class="profile-avatar-large" hidden>
+                        <div id="profilePhotoPlaceholder" class="profile-avatar-placeholder mx-auto">
+                            {{ user.first_name|default:user.username|slice:":1"|upper }}
+                        </div>
+                        {% endif %}
+                        <p class="text-muted small mt-2 mb-0">Choose an image to use as your profile picture.</p>
+                    </div>
+
                     {% for field in form %}
                         <div class="mb-3">
                             <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
@@ -34,4 +49,23 @@
         </div>
     </div>
 </div>
+<script>
+    const profilePhotoInput = document.getElementById('id_profile_photo');
+    const profilePhotoPreview = document.getElementById('profilePhotoPreview');
+    const profilePhotoPlaceholder = document.getElementById('profilePhotoPlaceholder');
+    let profilePhotoPreviewUrl;
+
+    if (profilePhotoInput) {
+        profilePhotoInput.addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) return;
+
+            if (profilePhotoPreviewUrl) URL.revokeObjectURL(profilePhotoPreviewUrl);
+            profilePhotoPreviewUrl = URL.createObjectURL(file);
+            profilePhotoPreview.src = profilePhotoPreviewUrl;
+            profilePhotoPreview.hidden = false;
+            profilePhotoPlaceholder.hidden = true;
+        });
+    }
+</script>
 {% endblock %}
