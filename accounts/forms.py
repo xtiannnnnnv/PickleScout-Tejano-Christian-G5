@@ -76,7 +76,10 @@ class UserProfileForm(forms.ModelForm):
             'contact_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. +63 912 345 6789'}),
             'dupr_rating': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'e.g. 3.5', 'step': '0.1', 'min': '1.0', 'max': '8.0'}),
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Makati City'}),
-            'profile_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'profile_photo': forms.ClearableFileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*',
+            }),
         }
         labels = {
             'dupr_rating': 'DUPR Rating',

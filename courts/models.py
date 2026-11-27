@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class Court(models.Model):
@@ -103,6 +104,48 @@ class Court(models.Model):
             amenities.append('Wheelchair Accessible')
         return amenities
 
+    def average_rating(self):
+        """Return the average review rating or None."""
+        reviews = self.reviews.all()
+        if not reviews.exists():
+            return None
+        total = sum(r.rating for r in reviews)
+        return round(total / reviews.count(), 1)
+
+    def review_count(self):
+        return self.reviews.count()
+
+
+class CourtReview(models.Model):
+    """A user review for a court they have visited."""
+    court = models.ForeignKey(
+        Court,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='court_reviews',
+    )
+    rating = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text='Rate from 1 (poor) to 5 (excellent)',
+    )
+    comment = models.TextField(
+        blank=True,
+        help_text='Share your experience at this court',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('court', 'user')  # one review per user per court
+
+    def __str__(self):
+        return f'{self.user.username} — {self.rating}/5 — {self.court.name}'
+
 
 class FavoriteCourt(models.Model):
     """A user's saved favorite court."""
@@ -123,7 +166,7 @@ class FavoriteCourt(models.Model):
         ordering = ['-added_at']
 
     def __str__(self):
-        return f'{self.user.username} ♥ {self.court.name}'
+        return f'{self.user.username} — {self.court.name}'
 
 
 class CourtReport(models.Model):

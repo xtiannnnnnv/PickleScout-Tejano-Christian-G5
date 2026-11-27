@@ -1,5 +1,5 @@
 from django import forms
-from .models import Court, CourtReport
+from .models import Court, CourtReport, CourtReview
 
 
 class CourtForm(forms.ModelForm):
@@ -77,5 +77,24 @@ class CourtReportForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 4,
                 'placeholder': 'Describe what information is inaccurate or outdated...',
+            }),
+        }
+
+
+class CourtReviewForm(forms.ModelForm):
+    """Form for submitting a court review."""
+
+    class Meta:
+        model = CourtReview
+        fields = ['rating', 'comment']
+        widgets = {
+            'rating': forms.Select(
+                choices=[(i, f'{i} Star{"s" if i > 1 else ""}') for i in range(1, 6)],
+                attrs={'class': 'form-select'},
+            ),
+            'comment': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Share your experience at this court...',
             }),
         }

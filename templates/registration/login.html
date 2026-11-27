@@ -3,44 +3,75 @@
 {% block title %}Login — PickleScout{% endblock %}
 
 {% load static %}
+{% block main_class %}login-main{% endblock %}
 {% block content %}
-<div class="row justify-content-center" style="min-height: 70vh; align-items: center;">
-    <div class="col-md-5 col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-header-ps text-center py-4">
-                <img src="{% static 'img/picklescoutlogo.png' %}" alt="PickleScout" style="height: 60px;" class="mb-2">
-                <h3 class="mb-1 fw-bold">PickleScout</h3>
-                <small class="opacity-75">Find your perfect court</small>
-            </div>
-            <div class="card-body p-4">
-                <h5 class="mb-3 fw-bold">Welcome Back</h5>
+<style>
+    .login-main { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+    .login-page {
+        display: grid;
+        min-height: calc(100vh - 145px);
+        place-items: center;
+        padding: 56px 20px;
+        background:
+            radial-gradient(ellipse at 86% 16%, rgba(183, 233, 107, .3), transparent 32%),
+            linear-gradient(135deg, #f6f9ee 0%, #edf5e6 52%, #e6f0dc 100%);
+    }
+    .login-card {
+        width: min(100%, 440px);
+        overflow: hidden;
+        border: 1px solid rgba(23, 107, 77, .08);
+        border-radius: 22px;
+        box-shadow: 0 24px 70px rgba(16, 77, 57, .16);
+    }
+    .login-card:hover { transform: none; box-shadow: 0 24px 70px rgba(16, 77, 57, .16); }
+    .login-card .card-header-ps {
+        padding: 30px 24px !important;
+        background: linear-gradient(140deg, #176b4d, #104d39);
+    }
+    .login-card .card-body { padding: 30px !important; }
+    .login-card h5 { color: #17382c; }
+    .login-card .form-control { min-height: 48px; }
+    .login-card .btn-ps { min-height: 48px; margin-top: 5px; }
+    @media (max-width: 576px) {
+        .login-page { min-height: calc(100vh - 145px); padding: 36px 18px; }
+        .login-card .card-body { padding: 24px !important; }
+    }
+</style>
+<div class="login-page">
+    <div class="card login-card">
+        <div class="card-header-ps text-center">
+            <img src="{% static 'img/picklescoutlogo.png' %}?v=20261127" alt="PickleScout" style="height: 60px;" class="mb-2">
+            <h3 class="mb-1 fw-bold">PickleScout</h3>
+            <small class="opacity-75">Find your perfect court</small>
+        </div>
+        <div class="card-body">
+            <h5 class="mb-3 fw-bold">Welcome back</h5>
 
-                <form method="post">
-                    {% csrf_token %}
+            <form method="post">
+                {% csrf_token %}
 
-                    <div class="mb-3">
-                        <label for="id_username" class="form-label">Username</label>
-                        <input type="text" name="username" id="id_username" class="form-control" required>
-                    </div>
+                <div class="mb-3">
+                    <label for="id_username" class="form-label">Username</label>
+                    <input type="text" name="username" id="id_username" class="form-control" autocomplete="username" required>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="id_password" class="form-label">Password</label>
-                        <input type="password" name="password" id="id_password" class="form-control" required>
-                    </div>
+                <div class="mb-3">
+                    <label for="id_password" class="form-label">Password</label>
+                    <input type="password" name="password" id="id_password" class="form-control" autocomplete="current-password" required>
+                </div>
 
-                    {% if form.non_field_errors %}
-                        {% for error in form.non_field_errors %}
-                            <div class="alert alert-danger py-2">{{ error }}</div>
-                        {% endfor %}
-                    {% endif %}
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <div class="alert alert-danger py-2">{{ error }}</div>
+                    {% endfor %}
+                {% endif %}
 
-                    <button type="submit" class="btn btn-ps w-100 py-2">Log In</button>
-                </form>
+                <button type="submit" class="btn btn-ps w-100 py-2">Log In</button>
+            </form>
 
-                <p class="text-center mt-3 mb-0">
-                    Don't have an account? <a href="{% url 'register' %}" class="fw-semibold">Register here</a>
-                </p>
-            </div>
+            <p class="text-center mt-3 mb-0">
+                Don't have an account? <a href="{% url 'register' %}" class="fw-semibold">Sign up</a>
+            </p>
         </div>
     </div>
 </div>
